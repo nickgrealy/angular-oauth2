@@ -33,8 +33,8 @@
                 }
                 // SNOW 401 {"error":{"detail":"Required to provide Auth information","message":"User Not Authenticated"},"status":"failure"}
                 // on expired_token AND invalid_request
-                if (401 === rejection.status) {
-                    OAuthToken.removeToken();
+                if (rejection.status == 401 && !rejection.config.skipIntercept) {
+                    // OAuthToken.removeToken();
                     $rootScope.$emit("oauth:error", rejection);
                 }
                 // if (400 === rejection.status && rejection.data && ("invalid_request" === rejection.data.error || "invalid_grant" === rejection.data.error)) {
@@ -155,6 +155,7 @@
                         }
                         data = queryString.stringify(data);
                         options = angular.extend({
+                            skipIntercept: true,
                             headers: {
                                 Authorization: undefined,
                                 "Content-Type": "application/x-www-form-urlencoded"
