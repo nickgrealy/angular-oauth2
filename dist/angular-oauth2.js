@@ -28,29 +28,31 @@
                 return config;
             },
             responseError: function responseError(rejection) {
+                var deferred = $q.defer();
                 if (!rejection) {
-                    return $q.reject(rejection);
-                }
-                // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
-                if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
-                    
-                    OAuth.getRefreshToken().then(
-                        function onSuccess() {
-                            // refresh token succeeded, retry the original request...
-                            var $http = $injector.get('$http');
-                            return $http(response.config);
-                        }, function onError() {
-                            // refresh token failed, remove token and notify listeners...
-                            OAuthToken.removeToken();
-                            $rootScope.$emit("oauth:error", rejection);
-                        });
-
+                    deferred.reject(rejection);
                 } else {
-                    // notify listeners, unhandled authorisation failed event...
-                    $rootScope.$emit("oauth:error", rejection);
+                    // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
+                    if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
+                        OAuth.getRefreshToken().then(
+                            function onSuccess() {
+                                // refresh token succeeded, retry the original request...
+                                deferred.resolve($injector.get('$http')(response.config));
+                            }, function onError() {
+                                // refresh token failed, remove token and notify listeners...
+                                OAuthToken.removeToken();
+                                $rootScope.$emit("oauth:token_expired", rejection);
+                                // give up on the original request...
+                                deferred.reject(rejection);
+                            });
+                    } else {
+                        // notify listeners, unhandled authorisation failed event...
+                        $rootScope.$emit("oauth:unauthorised", rejection);
+                        // give up on the original request...
+                        deferred.reject(rejection);
+                    }
                 }
-                // give up on the original request...
-                return $q.reject(rejection);
+                return deferred.promise;
             }
         };
     }
