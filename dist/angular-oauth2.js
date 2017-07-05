@@ -31,13 +31,19 @@
                 if (!rejection) {
                     return $q.reject(rejection);
                 }
-                if (400 === rejection.status && rejection.data && ("invalid_request" === rejection.data.error || "invalid_grant" === rejection.data.error)) {
+                // SNOW 401 {"error":{"detail":"Required to provide Auth information","message":"User Not Authenticated"},"status":"failure"}
+                // on expired_token AND invalid_request
+                if (401 === rejection.status) {
                     OAuthToken.removeToken();
                     $rootScope.$emit("oauth:error", rejection);
                 }
-                if (401 === rejection.status && rejection.data && "invalid_token" === rejection.data.error || rejection.headers && rejection.headers("www-authenticate") && 0 === rejection.headers("www-authenticate").indexOf("Bearer")) {
-                    $rootScope.$emit("oauth:error", rejection);
-                }
+                // if (400 === rejection.status && rejection.data && ("invalid_request" === rejection.data.error || "invalid_grant" === rejection.data.error)) {
+                //     OAuthToken.removeToken();
+                //     $rootScope.$emit("oauth:error", rejection);
+                // }
+                // if (401 === rejection.status && rejection.data && "invalid_token" === rejection.data.error || rejection.headers && rejection.headers("www-authenticate") && 0 === rejection.headers("www-authenticate").indexOf("Bearer")) {
+                //     $rootScope.$emit("oauth:error", rejection);
+                // }
                 return $q.reject(rejection);
             }
         };
