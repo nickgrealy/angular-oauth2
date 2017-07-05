@@ -56,7 +56,7 @@
             }
         };
     }
-    oauthInterceptor.$inject = [ "$q", "$rootScope", "OAuthToken" ];
+    oauthInterceptor.$inject = [ "$q", "$rootScope", "$injectory", "OAuth", "OAuthToken" ];
     var _createClass = function() {
         function defineProperties(target, props) {
             for (var i = 0; i < props.length; i++) {
