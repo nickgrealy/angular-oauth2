@@ -18,7 +18,7 @@
         $httpProvider.interceptors.push("oauthInterceptor");
     }
     oauthConfig.$inject = [ "$httpProvider" ];
-    function oauthInterceptor($q, $rootScope, OAuthToken) {
+    function oauthInterceptor($q, $rootScope, $injectory, OAuth, OAuthToken) {
         return {
             request: function request(config) {
                 config.headers = config.headers || {};
@@ -31,19 +31,25 @@
                 if (!rejection) {
                     return $q.reject(rejection);
                 }
-                // SNOW 401 {"error":{"detail":"Required to provide Auth information","message":"User Not Authenticated"},"status":"failure"}
-                // on expired_token AND invalid_request
-                if (rejection.status == 401 && !rejection.config.skipIntercept) {
-                    // OAuthToken.removeToken();
+                // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
+                if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
+                    
+                    OAuth.getRefreshToken().then(
+                        function onSuccess() {
+                            // refresh token succeeded, retry the original request...
+                            var $http = $injector.get('$http');
+                            return $http(response.config);
+                        }, function onError() {
+                            // refresh token failed, remove token and notify listeners...
+                            OAuthToken.removeToken();
+                            $rootScope.$emit("oauth:error", rejection);
+                        });
+
+                } else {
+                    // notify listeners, unhandled authorisation failed event...
                     $rootScope.$emit("oauth:error", rejection);
                 }
-                // if (400 === rejection.status && rejection.data && ("invalid_request" === rejection.data.error || "invalid_grant" === rejection.data.error)) {
-                //     OAuthToken.removeToken();
-                //     $rootScope.$emit("oauth:error", rejection);
-                // }
-                // if (401 === rejection.status && rejection.data && "invalid_token" === rejection.data.error || rejection.headers && rejection.headers("www-authenticate") && 0 === rejection.headers("www-authenticate").indexOf("Bearer")) {
-                //     $rootScope.$emit("oauth:error", rejection);
-                // }
+                // give up on the original request...
                 return $q.reject(rejection);
             }
         };
