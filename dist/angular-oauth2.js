@@ -38,7 +38,7 @@
                         OAuth.getRefreshToken().then(
                             function onSuccess() {
                                 // refresh token succeeded, retry the original request...
-                                deferred.resolve($injector.get('$http')(response.config));
+                                deferred.resolve($injector.get('$http')(rejection.config));
                             }, function onError() {
                                 // refresh token failed, remove token and notify listeners...
                                 OAuthToken.removeToken();
