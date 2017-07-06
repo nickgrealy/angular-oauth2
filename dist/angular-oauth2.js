@@ -38,7 +38,7 @@
                         $log.debug('oauth: 401 received, refreshing token...');
                         OAuth.getRefreshToken().then(
                             function onSuccess() {
-                                $log.debug('oauth: refresh token successful, retrying original request... ' + angular.toJson(rejection.config, true));
+                                $log.debug('oauth: refresh token successful, retrying original request...');
                                 // refresh token succeeded, retry the original request...
                                 var config = rejection.config;
                                 config.headers = config.headers || {};
