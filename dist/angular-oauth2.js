@@ -18,7 +18,7 @@
         $httpProvider.interceptors.push("oauthInterceptor");
     }
     oauthConfig.$inject = [ "$httpProvider" ];
-    function oauthInterceptor($q, $rootScope, $injectory, OAuthToken) {
+    function oauthInterceptor($q, $rootScope, $injector, OAuthToken) {
         return {
             request: function request(config) {
                 config.headers = config.headers || {};
