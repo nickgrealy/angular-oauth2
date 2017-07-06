@@ -18,7 +18,7 @@
         $httpProvider.interceptors.push("oauthInterceptor");
     }
     oauthConfig.$inject = [ "$httpProvider" ];
-    function oauthInterceptor($q, $rootScope, $injectory, OAuth, OAuthToken) {
+    function oauthInterceptor($q, $rootScope, $injectory, OAuthToken) {
         return {
             request: function request(config) {
                 config.headers = config.headers || {};
@@ -33,7 +33,7 @@
                     deferred.reject(rejection);
                 } else {
                     // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
-                    if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
+                    if (rejection.status == 401 && !!OAuthToken.getToken() && !rejection.config.skipIntercept) {
                         OAuth.getRefreshToken().then(
                             function onSuccess() {
                                 // refresh token succeeded, retry the original request...
@@ -56,7 +56,7 @@
             }
         };
     }
-    oauthInterceptor.$inject = [ "$q", "$rootScope", "$injector", "OAuth", "OAuthToken" ];
+    oauthInterceptor.$inject = [ "$q", "$rootScope", "$injector", "OAuthToken" ];
     var _createClass = function() {
         function defineProperties(target, props) {
             for (var i = 0; i < props.length; i++) {
