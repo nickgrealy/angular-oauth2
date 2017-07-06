@@ -32,8 +32,9 @@
                 if (!rejection) {
                     deferred.reject(rejection);
                 } else {
+                    var OAuth = $injector.get('OAuth');
                     // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
-                    if (rejection.status == 401 && !!OAuthToken.getToken() && !rejection.config.skipIntercept) {
+                    if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
                         OAuth.getRefreshToken().then(
                             function onSuccess() {
                                 // refresh token succeeded, retry the original request...
