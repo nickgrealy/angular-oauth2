@@ -40,7 +40,12 @@
                             function onSuccess() {
                                 $log.debug('oauth: refresh token successful, retrying original request... ' + angular.toJson(rejection.config, true));
                                 // refresh token succeeded, retry the original request...
-                                deferred.resolve($injector.get('$http')(rejection.config));
+                                var config = rejection.config;
+                                config.headers = config.headers || {};
+                                if (OAuthToken.getAuthorizationHeader()) {
+                                    config.headers.Authorization = OAuthToken.getAuthorizationHeader();
+                                }
+                                deferred.resolve($injector.get('$http')(config));
                             }, function onError() {
                                 $log.debug('oauth: refresh token failed, remove token and notify listeners...');
                                 // refresh token failed, remove token and notify listeners...
