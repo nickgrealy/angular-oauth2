@@ -18,7 +18,7 @@
         $httpProvider.interceptors.push("oauthInterceptor");
     }
     oauthConfig.$inject = [ "$httpProvider" ];
-    function oauthInterceptor($q, $rootScope, $injector, OAuthToken) {
+    function oauthInterceptor($q, $rootScope, $log, $injector, OAuthToken) {
         return {
             request: function request(config) {
                 config.headers = config.headers || {};
@@ -35,11 +35,14 @@
                     var OAuth = $injector.get('OAuth');
                     // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
                     if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
+                        $log.debug('oauth: 401 received, refreshing token...');
                         OAuth.getRefreshToken().then(
                             function onSuccess() {
+                                $log.debug('oauth: refresh token successful, retrying original request... ' + angular.toJson(rejection.config, true));
                                 // refresh token succeeded, retry the original request...
                                 deferred.resolve($injector.get('$http')(rejection.config));
                             }, function onError() {
+                                $log.debug('oauth: refresh token failed, remove token and notify listeners...');
                                 // refresh token failed, remove token and notify listeners...
                                 OAuthToken.removeToken();
                                 $rootScope.$emit("oauth:token_expired", rejection);
@@ -47,6 +50,7 @@
                                 deferred.reject(rejection);
                             });
                     } else {
+                        $log.debug('oauth: notify listeners, unhandled authorisation failed event...');
                         // notify listeners, unhandled authorisation failed event...
                         $rootScope.$emit("oauth:unauthorised", rejection);
                         // give up on the original request...
@@ -57,7 +61,7 @@
             }
         };
     }
-    oauthInterceptor.$inject = [ "$q", "$rootScope", "$injector", "OAuthToken" ];
+    oauthInterceptor.$inject = [ "$q", "$rootScope", "$log", "$injector", "OAuthToken" ];
     var _createClass = function() {
         function defineProperties(target, props) {
             for (var i = 0; i < props.length; i++) {
