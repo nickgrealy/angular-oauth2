@@ -34,32 +34,39 @@
                 } else {
                     var OAuth = $injector.get('OAuth');
                     // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
-                    if (rejection.status == 401 && OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
-                        $log.debug('oauth: 401 received, refreshing token...');
-                        OAuth.getRefreshToken().then(
-                            function onSuccess() {
-                                $log.debug('oauth: refresh token successful, retrying original request...');
-                                // refresh token succeeded, retry the original request...
-                                var config = rejection.config;
-                                config.headers = config.headers || {};
-                                if (OAuthToken.getAuthorizationHeader()) {
-                                    config.headers.Authorization = OAuthToken.getAuthorizationHeader();
-                                }
-                                deferred.resolve($injector.get('$http')(config));
-                            }, function onError() {
-                                $log.debug('oauth: refresh token failed, remove token and notify listeners...');
-                                // refresh token failed, remove token and notify listeners...
-                                OAuthToken.removeToken();
-                                $rootScope.$emit("oauth:token_expired", rejection);
-                                // give up on the original request...
-                                deferred.reject(rejection);
-                            });
+                    if (rejection.status == 401) {
+                        if (OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
+                            $log.debug('oauth: 401 received, refreshing token...');
+                            OAuth.getRefreshToken().then(
+                                function onSuccess() {
+                                    $log.debug('oauth: refresh token successful, retrying original request...');
+                                    // refresh token succeeded, retry the original request...
+                                    var config = rejection.config;
+                                    config.headers = config.headers || {};
+                                    if (OAuthToken.getAuthorizationHeader()) {
+                                        config.headers.Authorization = OAuthToken.getAuthorizationHeader();
+                                    }
+                                    deferred.resolve($injector.get('$http')(config));
+                                }, function onError() {
+                                    $log.debug('oauth: refresh token failed, remove token and notify listeners...');
+                                    // refresh token failed, remove token and notify listeners...
+                                    OAuthToken.removeToken();
+                                    $rootScope.$emit("oauth:token_expired", rejection);
+                                    // give up on the original request...
+                                    deferred.reject(rejection);
+                                });
+                        } else {
+                            $log.debug('oauth: notify listeners, unhandled authorisation failed event...');
+                            // notify listeners, unhandled authorisation failed event...
+                            $rootScope.$emit("oauth:unauthorised", rejection);
+                            // give up on the original request...
+                            deferred.reject(rejection);
+                        }
+                    // if status code is not 401 Unauthorised...
                     } else {
-                        $log.debug('oauth: notify listeners, unhandled authorisation failed event...');
-                        // notify listeners, unhandled authorisation failed event...
-                        $rootScope.$emit("oauth:unauthorised", rejection);
-                        // give up on the original request...
-                        deferred.reject(rejection);
+                            $log.debug('oauth: skipping unhandled status code: ' + rejection.status);
+                            // give up on the original request...
+                            deferred.reject(rejection);
                     }
                 }
                 return deferred.promise;
