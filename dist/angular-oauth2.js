@@ -36,7 +36,7 @@
                     // if unauthorised response, and user WAS authorised, and it's the 'first time' attempting to refresh token...
                     if (rejection.status == 401) {
                         if (OAuth.isAuthenticated() && !rejection.config.skipIntercept) {
-                            $log.debug('oauth: 401 received, refreshing token...');
+                            $log.debug('oauth: 401 received, refreshing token... isAuthorised=' + OAuth.isAuthenticated() + ' skipIntercept=' + rejection.config.skipIntercept);
                             OAuth.getRefreshToken().then(
                                 function onSuccess() {
                                     $log.debug('oauth: refresh token successful, retrying original request...');
