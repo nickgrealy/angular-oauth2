@@ -148,6 +148,8 @@
                 }, {
                     key: "getAccessToken",
                     value: function getAccessToken(data, options) {
+                        // remove any previous existing OAuthToken...
+                        OAuthToken.removeToken();
                         data = angular.extend({
                             client_id: this.config.clientId,
                             grant_type: "password"
